@@ -1,6 +1,9 @@
 using System;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Xml;
 using numan.Models;
+using Spectre.Console;
 
 namespace numan.Utils;
 
@@ -49,5 +52,43 @@ public static class NuGetUtils
         }
 
         return sources;
+    }
+
+    public static Dictionary<string, string> GetInstalledPackages(string sourcePath)
+    {
+        var packageVersions = new Dictionary<string, List<string>>();
+
+        if (!Directory.Exists(sourcePath))
+        {
+            Console.WriteLine($"[red]Error: NuGet source folder not found: {sourcePath}[/]");
+            return new Dictionary<string, string>();
+        }
+
+        var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg");
+        var packageRegex = new Regex(@"^(.*)\.(\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?)\.nupkg$", RegexOptions.Compiled);
+
+        foreach (var file in packageFiles)
+        {
+            string fileName = Path.GetFileName(file);
+            var match = packageRegex.Match(fileName);
+
+            if (match.Success)
+            {
+                string packageName = match.Groups[1].Value;
+                string packageVersion = match.Groups[2].Value;
+
+                if (!packageVersions.ContainsKey(packageName))
+                {
+                    packageVersions[packageName] = new List<string>();
+                }
+
+                packageVersions[packageName].Add(packageVersion);
+            }
+        }
+
+        return packageVersions.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.OrderByDescending(v => v, StringComparer.OrdinalIgnoreCase).First()
+        );
     }
 }
