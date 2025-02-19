@@ -1,4 +1,5 @@
 using Numan.Config;
+using Numan.Models;
 using Numan.Utils;
 using Spectre.Console;
 
@@ -17,13 +18,13 @@ public class RemovePackagesCommand : BaseCommand
             return;
         }
 
-        Dictionary<string, List<string>> installedPackages = new();
+        List<PackageInfo> installedPackages = new();
         foreach (var source in config.NugetSources)
         {
-            installedPackages = NuGetUtils.GetInstalledPackages(source.Value, !deleteAllVersions);
+            installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, !deleteAllVersions));
         }
 
-        List<(string Name, string Version)> selectedPackages = new();
+        List<PackageInfo> selectedPackages = new();
 
         if (deleteAllVersions)
         {
@@ -33,30 +34,38 @@ public class RemovePackagesCommand : BaseCommand
                     .PageSize(10)
                     .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
                     .InstructionsText("[gray](Press [blue]<space>[/] to select, [green]<enter>[/] to confirm)[/]")
-                    .AddChoices(installedPackages.Keys.ToArray())
+                    .AddChoices(installedPackages.Select(pkg => pkg.Name).Distinct().ToArray())
             );
 
-            selectedPackages = selectedPackageNames
-                .SelectMany(pkg => installedPackages[pkg].Select(version => (pkg, version)))
+            selectedPackages = installedPackages
+                .Where(pkg => selectedPackageNames.Contains(pkg.Name))
                 .ToList();
         }
         else
         {
             var packageChoices = installedPackages
-                .SelectMany(pkg => pkg.Value.Select(version => $"{pkg.Key} {version}"))
+                .SelectMany(pkg => pkg.Versions.Select(version => new { Package = pkg, Version = version }))
                 .ToList();
 
-            selectedPackages = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<(string, string)>()
+            var selectedPackageChoices = AnsiConsole.Prompt(
+                new MultiSelectionPrompt<(PackageInfo, Version)>()
                     .Title("[blue]Select package versions to delete:[/]")
                     .PageSize(10)
                     .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
                     .InstructionsText("[gray](Press [blue]<space>[/] to select, [green]<enter>[/] to confirm)[/]")
-                    .AddChoices(packageChoices.Select(p =>
-                        (p.Split(' ')[0], p.Split(' ')[1])
-                    ))
-                    .UseConverter(p => $"{p.Item1} {p.Item2}")
+                    .AddChoices(packageChoices.Select(p => (p.Package, p.Version)))
+                    .UseConverter(p => $"{p.Item1.Name} {p.Item2}")
             );
+
+            selectedPackages = selectedPackageChoices
+                .Select(p => p.Item1)
+                .Distinct()
+                .ToList();
+
+            foreach (var (package, version) in selectedPackageChoices)
+            {
+                package.Versions.Remove(version);
+            }
         }
 
         if (selectedPackages.Count == 0)
@@ -70,22 +79,22 @@ public class RemovePackagesCommand : BaseCommand
             return;
         }
 
-        foreach (var (packageName, packageVersion) in selectedPackages)
+        foreach (var package in selectedPackages)
         {
-            foreach (var source in config.NugetSources)
+            foreach (var version in package.Versions)
             {
-                string packagePath = Path.Combine(source.Value, $"{packageName}.{packageVersion}.nupkg");
+                string packagePath = package.GetPackageFilePath(version);
 
                 if (File.Exists(packagePath))
                 {
                     try
                     {
                         File.Delete(packagePath);
-                        AnsiConsole.MarkupLine($"[green]Deleted:[/] {packageName} {packageVersion}");
+                        AnsiConsole.MarkupLine($"[green]Deleted:[/] {package.Name} {version} from {package.Source}");
                     }
                     catch (Exception ex)
                     {
-                        AnsiConsole.MarkupLine($"[red]Failed to delete {packageName} {packageVersion}: {ex.Message}[/]");
+                        AnsiConsole.MarkupLine($"[red]Failed to delete {package.Name} {version}: {ex.Message}[/]");
                     }
                 }
             }

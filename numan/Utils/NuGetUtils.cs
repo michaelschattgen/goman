@@ -53,14 +53,13 @@ public static class NuGetUtils
         return sources;
     }
 
-    public static Dictionary<string, List<string>> GetInstalledPackages(string sourcePath, bool includeAllVersions = false)
+    public static List<PackageInfo> GetInstalledPackages(string sourcePath, bool includeAllVersions = false)
     {
-        var packageVersions = new Dictionary<string, List<string>>();
-
+        var packages = new Dictionary<string, PackageInfo>();
         if (!Directory.Exists(sourcePath))
         {
             Console.WriteLine($"[red]Error: NuGet source folder not found: {sourcePath}[/]");
-            return new Dictionary<string, List<string>>();
+            return new List<PackageInfo>();
         }
 
         var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg");
@@ -74,23 +73,27 @@ public static class NuGetUtils
                 string packageName = match.Groups[2].Value;
                 string packageVersion = match.Groups[3].Value;
 
-                if (!packageVersions.ContainsKey(packageName))
+                if (!packages.ContainsKey(packageName))
                 {
-                    packageVersions[packageName] = new List<string>();
+                    packages[packageName] = new PackageInfo(packageName, sourcePath, file, new List<string>());
                 }
 
-                packageVersions[packageName].Add(packageVersion);
+                packages[packageName].Versions.Add(Version.Parse(packageVersion));
             }
+        }
+
+        foreach (var package in packages.Values)
+        {
+            package.Versions.Sort((a, b) => b.CompareTo(a));
         }
 
         if (!includeAllVersions)
         {
-            return packageVersions.ToDictionary(
-                kvp => kvp.Key,
-                kvp => new List<string> { kvp.Value.OrderByDescending(v => v, StringComparer.OrdinalIgnoreCase).First() }
-            );
+            return packages.Values
+                .Select(p => new PackageInfo(p.Name, p.Source, p.PackagePath, new List<string> { p.GetLatestVersion()?.ToString() ?? "0.0.0" }))
+                .ToList();
         }
 
-        return packageVersions;
+        return packages.Values.ToList();
     }
 }

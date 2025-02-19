@@ -33,7 +33,7 @@ var listSourcesCommand = new Command("list-sources", "List saved NuGet sources t
 listSourcesCommand.SetHandler(new ListSourcesCommand().Execute);
 rootCommand.AddCommand(listSourcesCommand);
 
-var listPackagesCommand = new Command("list-packages", "Lists installed NuGet packages with their latest versions");
+var listPackagesCommand = new Command("list", "Lists installed NuGet packages with their latest versions");
 var listPackagesSourceOption = new Option<string>("source", "Name of the NuGet source");
 listPackagesCommand.AddOption(listPackagesSourceOption);
 listPackagesCommand.SetHandler(new ListPackagesCommand().Execute, listPackagesSourceOption);

@@ -1,4 +1,5 @@
 using Numan.Config;
+using Numan.Models;
 using Numan.Utils;
 using Spectre.Console;
 
@@ -24,42 +25,43 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        Dictionary<string, string> latestPackages = new(StringComparer.OrdinalIgnoreCase);
-
+        List<PackageInfo> installedPackages = new();
         foreach (var source in config.NugetSources)
         {
-            var installedPackages = NuGetUtils.GetInstalledPackages(source.Value);
-            foreach (var package in installedPackages)
-            {
-                latestPackages.Add(package.Key, package.Value.First().ToString());
-                AnsiConsole.WriteLine(package.Key + " " + package.Value.First().ToString());
-            }
+            installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, includeAllVersions: false));
         }
 
-        var newPackages = new List<(string Name, string Version, string Path)>();
-
+        List<PackageInfo> monitoredPackages = new();
         foreach (var folder in config.MonitoredFolders)
         {
             if (!Directory.Exists(folder)) continue;
 
-            var packageFiles = Directory.GetFiles(folder, "*.nupkg");
-            foreach (var file in packageFiles)
+            monitoredPackages.AddRange(NuGetUtils.GetInstalledPackages(folder, includeAllVersions: true));
+        }
+
+        var newPackages = new List<(PackageInfo Package, Version NewVersion, string FilePath, bool isInstalled)>();
+
+        foreach (var monitoredPackage in monitoredPackages)
+        {
+            var installedPackage = installedPackages.FirstOrDefault(p => p.Name.ToLower() == monitoredPackage.Name.ToLower());
+            var latestMonitoredVersion = monitoredPackage.GetLatestVersion();
+
+            if (latestMonitoredVersion == null) continue;
+
+            if (installedPackage == null)
             {
-                string fileName = Path.GetFileName(file);
-                var match = NuGetUtils.PackageFileRegex.Match(fileName);
+                string packageFilePath = monitoredPackage.GetPackageFilePath(latestMonitoredVersion);
+                newPackages.Add((monitoredPackage, latestMonitoredVersion, packageFilePath, isInstalled: false));
 
-                if (match.Success)
-                {
-                    string packageName = match.Groups[2].Value;
-                    string packageVersion = match.Groups[3].Value;
+                AnsiConsole.MarkupLine($"[green]New package detected:[/] {monitoredPackage.Name} {latestMonitoredVersion}");
+            } 
+            else if (latestMonitoredVersion > installedPackage.GetLatestVersion())
+            {
+                string packageFilePath = monitoredPackage.GetPackageFilePath(latestMonitoredVersion);
+                newPackages.Add((installedPackage, latestMonitoredVersion, packageFilePath, isInstalled: true));
 
+                AnsiConsole.MarkupLine($"[green]New version detected:[/] {monitoredPackage.Name} {latestMonitoredVersion}");
 
-                    if (!latestPackages.ContainsKey(packageName) || string.Compare(packageVersion, latestPackages[packageName.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
-                    {
-                        AnsiConsole.WriteLine("Adding " + packageName + " " + packageVersion);
-                        newPackages.Add((packageName, packageVersion, file));
-                    }
-                }
             }
         }
 
@@ -69,43 +71,34 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        var table = new Table();
-        table.Border = TableBorder.Rounded;
+        var table = new Table { Border = TableBorder.Rounded };
         table.AddColumn("[cyan]Package[/]");
         table.AddColumn("[green]New Version[/]");
         table.AddColumn("[yellow]Current Version[/]");
 
-        foreach (var (name, version, path) in newPackages)
+        foreach (var (package, newVersion, _, isInstalled) in newPackages)
         {
             table.AddRow(
-                $"[cyan]{name}[/]",
-                $"[green]{version}[/]",
-                latestPackages.ContainsKey(name) ? $"[yellow]{latestPackages[name]}[/]" : "[gray]Not Installed[/]"
+                $"[cyan]{package.Name}[/]",
+                $"[green]{newVersion}[/]",
+                isInstalled ? $"[yellow]{package.GetLatestVersion()}[/]" : "[gray]Not Installed[/]"
             );
         }
 
         AnsiConsole.Write(table);
 
-        List<(string Name, string Version, string Path)> selectedPackages = new();
+        List<(PackageInfo Package, Version NewVersion, string FilePath, bool isInstalled)> selectedPackages = new();
 
         if (allowSelection)
         {
-            var packageChoices = newPackages
-                .Select(p => new SelectionPrompt<(string, string, string)>()
-                    .Title("Select packages to add (use space to select, Enter to confirm):")
+            selectedPackages = AnsiConsole.Prompt(
+                new MultiSelectionPrompt<(PackageInfo, Version, string, bool)>()
+                    .Title("[blue]Select packages to update (use space to select, Enter to confirm):[/]")
                     .PageSize(10)
                     .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
+                    .InstructionsText("[gray](Press [blue]<space>[/] to select, [green]<enter>[/] to confirm)[/]")
                     .AddChoices(newPackages)
-                    .UseConverter(p => $"{p.Item1} {p.Item2}")
-                ).ToList();
-
-            selectedPackages = AnsiConsole.Prompt(new MultiSelectionPrompt<(string, string, string)>()
-                .Title("[blue]Select packages to add (use space to select, Enter to confirm):[/]")
-                .PageSize(10)
-                .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
-                .InstructionsText("[gray](Press [blue]<space>[/] to select, [green]<enter>[/] to confirm)[/]")
-                .AddChoices(newPackages)
-                .UseConverter(p => $"{p.Item1} {p.Item2}")
+                    .UseConverter(p => $"{p.Item1.Name} {p.Item2}")
             );
         }
         else
@@ -118,12 +111,12 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        foreach (var (name, version, path) in selectedPackages)
+        foreach (var (package, newVersion, filePath, isInstalled) in selectedPackages)
         {
             var source = config.NugetSources.FirstOrDefault();
             if (source != null)
             {
-                new AddPackageCommand().Execute(path, source.Name ?? source.Value);
+                new AddPackageCommand().Execute(filePath, source.Name ?? source.Value);
             }
         }
     }

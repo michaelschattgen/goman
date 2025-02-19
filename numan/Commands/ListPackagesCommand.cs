@@ -54,7 +54,7 @@ public class ListPackagesCommand : BaseCommand
 
         foreach (var package in latestPackages)
         {
-            table.AddRow($"[cyan]{package.Key}[/]", $"[green]{package.Value.First()}[/]");
+            table.AddRow($"[cyan]{package.Name}[/]", $"[green]{package.Versions.First()}[/]");
         }
 
         AnsiConsole.Write(table);
