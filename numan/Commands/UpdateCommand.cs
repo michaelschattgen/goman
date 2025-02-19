@@ -116,7 +116,7 @@ public class UpdateCommand : BaseCommand
             var source = config.NugetSources.FirstOrDefault();
             if (source != null)
             {
-                new AddPackageCommand().Execute(filePath, source.Name ?? source.Value);
+                new AddPackageCommand().Execute(filePath, source.Name ?? ConfigManager.GetDefaultSource().Value);
             }
         }
     }

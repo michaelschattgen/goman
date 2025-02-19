@@ -20,7 +20,7 @@ public static class ConfigManager
     {
         if (!File.Exists(_configFilePath))
         {
-            AnsiConsole.MarkupLine("[yellow] No numan configuration file found. Please run 'numan init' first.[/]");
+            AnsiConsole.MarkupLine("[yellow]No numan configuration file found.[/]");
             return new NumanConfig();
         }
 
@@ -62,5 +62,16 @@ public static class ConfigManager
     public static bool ConfigExists()
     {
         return File.Exists(ConfigFilePath);
+    }
+
+    public static NugetSource GetDefaultSource()
+    {
+        if (Config.NugetSources == null || Config.NugetSources.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]No NuGet sources found.[/]");
+            return new NugetSource { Name = "Unknown", Value = string.Empty, IsDefault = false };
+        }
+
+        return Config.NugetSources.FirstOrDefault(x => x.IsDefault) ?? Config.NugetSources.First();
     }
 }
