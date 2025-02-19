@@ -20,7 +20,7 @@ public static class InitCommand
             monitoredFolders = new List<string>()
         };
 
-        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower });
+        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         File.WriteAllText(ConfigFilePath, json);
 
         foreach (var source in sources)
