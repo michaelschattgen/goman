@@ -1,9 +1,9 @@
-using numan.Config;
-using numan.Models;
-using numan.Utils;
+using Numan.Config;
+using Numan.Models;
+using Numan.Utils;
 using Spectre.Console;
 
-namespace numan.Commands;
+namespace Numan.Commands;
 
 public static class ListPackagesCommand
 {

@@ -1,6 +1,4 @@
-using System;
-
-namespace numan.Models;
+namespace Numan.Models;
 
 public class NumanConfig
 {

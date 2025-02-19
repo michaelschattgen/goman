@@ -1,8 +1,8 @@
 using System.Text.Json;
-using numan.Models;
+using Numan.Models;
 using Spectre.Console;
 
-namespace numan.Config;
+namespace Numan.Config;
 
 public static class ConfigManager
 {

@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Spectre.Console;
-using numan.Models;
-using numan.Config;
+using Numan.Config;
 
 namespace Numan.Commands
 {

@@ -1,5 +1,4 @@
 ﻿using System.CommandLine;
-using numan.Commands;
 using Numan.Commands;
 
 var rootCommand = new RootCommand("numan - NuGet Package Manager");

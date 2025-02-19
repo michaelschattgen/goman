@@ -1,8 +1,8 @@
-using numan.Config;
-using numan.Utils;
+using Numan.Config;
+using Numan.Utils;
 using Spectre.Console;
 
-namespace numan.Commands;
+namespace Numan.Commands;
 
 public static class UpdateCommand
 {

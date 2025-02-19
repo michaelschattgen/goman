@@ -1,10 +1,9 @@
-using System;
 using System.Diagnostics;
-using numan.Config;
-using numan.Models;
+using Numan.Config;
+using Numan.Models;
 using Spectre.Console;
 
-namespace numan.Commands;
+namespace Numan.Commands;
 
 public static class AddPackageCommand
 {

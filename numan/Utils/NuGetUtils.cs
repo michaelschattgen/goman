@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using System.Xml;
-using numan.Models;
+using Numan.Models;
 
-namespace numan.Utils;
+namespace Numan.Utils;
 
 public static class NuGetUtils
 {

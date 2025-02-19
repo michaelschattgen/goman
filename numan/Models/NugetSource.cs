@@ -1,4 +1,4 @@
-namespace numan.Models;
+namespace Numan.Models;
 
 public class NugetSource
 {
