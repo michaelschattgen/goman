@@ -4,10 +4,12 @@ using Spectre.Console;
 
 namespace Numan.Commands;
 
-public static class UpdateCommand
+public class UpdateCommand : BaseCommand
 {
-    public static void Execute(bool autoAccept = false)
+    public void Execute(bool autoAccept = false)
     {
+        PreExecute();
+        
         var config = ConfigManager.Config;
 
         if (config.NugetSources.Count == 0)
@@ -91,7 +93,7 @@ public static class UpdateCommand
                 var source = config.NugetSources.FirstOrDefault();
                 if (source != null)
                 {
-                    AddPackageCommand.Execute(path, source.Name ?? source.Value);
+                    new AddPackageCommand().Execute(path, source.Name ?? source.Value);
                 }
             }
         }

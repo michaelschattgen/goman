@@ -58,4 +58,9 @@ public static class ConfigManager
             AnsiConsole.MarkupLine($"[red]Failed to save numan conifg file {ex.Message}[/]");
         }
     }
+
+    public static bool ConfigExists()
+    {
+        return File.Exists(ConfigFilePath);
+    }
 }

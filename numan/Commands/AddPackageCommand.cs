@@ -5,10 +5,12 @@ using Spectre.Console;
 
 namespace Numan.Commands;
 
-public static class AddPackageCommand
+public class AddPackageCommand : BaseCommand
 {
-    public static void Execute(string? packagePath, string sourceName, string configuration = "Release")
+    public void Execute(string? packagePath, string sourceName, string configuration = "Release")
     {
+        PreExecute();
+
         string? relativePath;
         if (string.IsNullOrWhiteSpace(packagePath))
         {

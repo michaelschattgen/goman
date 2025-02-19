@@ -5,10 +5,12 @@ using Spectre.Console;
 
 namespace Numan.Commands;
 
-public static class ListPackagesCommand
+public class ListPackagesCommand : BaseCommand
 {
-    public static void Execute(string sourceName)
+    public void Execute(string sourceName)
     {
+        PreExecute();
+        
         var config = ConfigManager.Config;
         NugetSource? source;
 

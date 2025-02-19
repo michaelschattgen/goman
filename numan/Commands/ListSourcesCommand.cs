@@ -3,10 +3,12 @@ using Numan.Config;
 
 namespace Numan.Commands
 {
-    public static class ListSourcesCommand
+    public class ListSourcesCommand : BaseCommand
     {
-        public static void Execute()
+        public void Execute()
         {
+            PreExecute();
+            
             var config = ConfigManager.Config;
 
             try
