@@ -1,14 +1,13 @@
-using System;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
 using numan.Models;
-using Spectre.Console;
 
 namespace numan.Utils;
 
 public static class NuGetUtils
 {
+    public static Regex PackageFileRegex = new Regex(@"^(.*)\.(\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?)\.nupkg$", RegexOptions.Compiled);
+
     public static List<NugetSource> DetectNuGetSources()
     {
         List<NugetSource> sources = new();
@@ -65,12 +64,10 @@ public static class NuGetUtils
         }
 
         var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg");
-        var packageRegex = new Regex(@"^(.*)\.(\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?)\.nupkg$", RegexOptions.Compiled);
-
         foreach (var file in packageFiles)
         {
             string fileName = Path.GetFileName(file);
-            var match = packageRegex.Match(fileName);
+            var match = PackageFileRegex.Match(fileName);
 
             if (match.Success)
             {

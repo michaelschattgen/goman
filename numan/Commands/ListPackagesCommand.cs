@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using numan.Config;
 using numan.Models;
 using numan.Utils;
@@ -52,7 +51,7 @@ public static class ListPackagesCommand
 
         if (latestPackages.Count == 0)
         {
-            AnsiConsole.Markup("[yellow]No installed packages found.[/]");
+            AnsiConsole.MarkupLine("[yellow]No installed packages found.[/]");
             return;
         }
 
