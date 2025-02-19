@@ -50,6 +50,8 @@ public static class ConfigManager
                 WriteIndented = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
+
+            File.WriteAllText(ConfigFilePath, json);
         }
         catch (Exception ex)
         {
