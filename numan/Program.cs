@@ -1,13 +1,9 @@
 ﻿using System.CommandLine;
-using Spectre.Console;
+using numan.Commands;
 
 var rootCommand = new RootCommand("numan - NuGet Package Manager");
 
-var updateCommand = new Command("test", "Test if this new cli tool works properly");
-updateCommand.SetHandler(() =>
-{
-    AnsiConsole.MarkupLine("[green]it works 😎[/]");
-});
-
-rootCommand.AddCommand(updateCommand);
+var initCommand = new Command("init", "Init numan (run this the first time you start using numan)");
+initCommand.SetHandler(InitCommand.Execute);
+rootCommand.AddCommand(initCommand);
 rootCommand.Invoke(args);
