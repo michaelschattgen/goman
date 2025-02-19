@@ -24,17 +24,15 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        Dictionary<string, string> latestPackages = new();
+        Dictionary<string, string> latestPackages = new(StringComparer.OrdinalIgnoreCase);
 
         foreach (var source in config.NugetSources)
         {
             var installedPackages = NuGetUtils.GetInstalledPackages(source.Value);
             foreach (var package in installedPackages)
             {
-                if (!latestPackages.ContainsKey(package.Key.ToLower()) || string.Compare(package.Value, latestPackages[package.Key.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
-                {
-                    latestPackages[package.Key.ToLower()] = package.Value;
-                }
+                latestPackages.Add(package.Key, package.Value.First().ToString());
+                AnsiConsole.WriteLine(package.Key + " " + package.Value.First().ToString());
             }
         }
 
@@ -52,11 +50,13 @@ public class UpdateCommand : BaseCommand
 
                 if (match.Success)
                 {
-                    string packageName = match.Groups[1].Value;
-                    string packageVersion = match.Groups[2].Value;
+                    string packageName = match.Groups[2].Value;
+                    string packageVersion = match.Groups[3].Value;
 
-                    if (!latestPackages.ContainsKey(packageName.ToLower()) || string.Compare(packageVersion, latestPackages[packageName.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
+
+                    if (!latestPackages.ContainsKey(packageName) || string.Compare(packageVersion, latestPackages[packageName.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
                     {
+                        AnsiConsole.WriteLine("Adding " + packageName + " " + packageVersion);
                         newPackages.Add((packageName, packageVersion, file));
                     }
                 }
@@ -80,7 +80,7 @@ public class UpdateCommand : BaseCommand
             table.AddRow(
                 $"[cyan]{name}[/]",
                 $"[green]{version}[/]",
-                latestPackages.ContainsKey(name.ToLower()) ? $"[yellow]{latestPackages[name.ToLower()]}[/]" : "[gray]Not Installed[/]"
+                latestPackages.ContainsKey(name) ? $"[yellow]{latestPackages[name]}[/]" : "[gray]Not Installed[/]"
             );
         }
 

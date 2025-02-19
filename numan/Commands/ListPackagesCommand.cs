@@ -10,7 +10,7 @@ public class ListPackagesCommand : BaseCommand
     public void Execute(string sourceName)
     {
         PreExecute();
-        
+
         var config = ConfigManager.Config;
         NugetSource? source;
 
@@ -40,17 +40,7 @@ public class ListPackagesCommand : BaseCommand
             return;
         }
 
-        Dictionary<string, string> latestPackages = new();
-        var installedPackages = NuGetUtils.GetInstalledPackages(source.Value);
-        foreach (var package in installedPackages)
-        {
-            if (!latestPackages.ContainsKey(package.Key) || string.Compare(package.Value, latestPackages[package.Key], StringComparison.OrdinalIgnoreCase) > 0)
-            {
-                latestPackages[package.Key] = package.Value;
-            }
-
-        }
-
+        var latestPackages = NuGetUtils.GetInstalledPackages(source.Value);
         if (latestPackages.Count == 0)
         {
             AnsiConsole.MarkupLine("[yellow]No installed packages found.[/]");
@@ -64,7 +54,7 @@ public class ListPackagesCommand : BaseCommand
 
         foreach (var package in latestPackages)
         {
-            table.AddRow($"[cyan]{package.Key}[/]", $"[green]{package.Value}[/]");
+            table.AddRow($"[cyan]{package.Key}[/]", $"[green]{package.Value.First()}[/]");
         }
 
         AnsiConsole.Write(table);

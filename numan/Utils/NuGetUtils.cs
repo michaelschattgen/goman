@@ -6,7 +6,7 @@ namespace Numan.Utils;
 
 public static class NuGetUtils
 {
-    public static Regex PackageFileRegex = new Regex(@"^(.*)\.(\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?)\.nupkg$", RegexOptions.Compiled);
+    public static Regex PackageFileRegex = new Regex(@"^(?<name>.*)\.(?<version>\d+\.\d+\.\d+(-[a-zA-Z0-9-.]+)?)\.nupkg$", RegexOptions.Compiled);
 
     public static List<NugetSource> DetectNuGetSources()
     {
@@ -53,14 +53,14 @@ public static class NuGetUtils
         return sources;
     }
 
-    public static Dictionary<string, string> GetInstalledPackages(string sourcePath)
+    public static Dictionary<string, List<string>> GetInstalledPackages(string sourcePath, bool includeAllVersions = false)
     {
         var packageVersions = new Dictionary<string, List<string>>();
 
         if (!Directory.Exists(sourcePath))
         {
             Console.WriteLine($"[red]Error: NuGet source folder not found: {sourcePath}[/]");
-            return new Dictionary<string, string>();
+            return new Dictionary<string, List<string>>();
         }
 
         var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg");
@@ -71,8 +71,8 @@ public static class NuGetUtils
 
             if (match.Success)
             {
-                string packageName = match.Groups[1].Value;
-                string packageVersion = match.Groups[2].Value;
+                string packageName = match.Groups[2].Value;
+                string packageVersion = match.Groups[3].Value;
 
                 if (!packageVersions.ContainsKey(packageName))
                 {
@@ -83,9 +83,14 @@ public static class NuGetUtils
             }
         }
 
-        return packageVersions.ToDictionary(
-            kvp => kvp.Key,
-            kvp => kvp.Value.OrderByDescending(v => v, StringComparer.OrdinalIgnoreCase).First()
-        );
+        if (!includeAllVersions)
+        {
+            return packageVersions.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new List<string> { kvp.Value.OrderByDescending(v => v, StringComparer.OrdinalIgnoreCase).First() }
+            );
+        }
+
+        return packageVersions;
     }
 }

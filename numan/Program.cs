@@ -39,4 +39,10 @@ listPackagesCommand.AddOption(listPackagesSourceOption);
 listPackagesCommand.SetHandler(new ListPackagesCommand().Execute, listPackagesSourceOption);
 rootCommand.AddCommand(listPackagesCommand);
 
+var removePackagesCommand = new Command("remove", "Remove or delete packages from the local NuGet source");
+var allVersionsOption = new Option<bool>("--all-versions", "Delete entire packages, including all versions");
+removePackagesCommand.AddOption(allVersionsOption);
+removePackagesCommand.SetHandler(new RemovePackagesCommand().Execute, allVersionsOption);
+rootCommand.AddCommand(removePackagesCommand);
+
 rootCommand.Invoke(args);
