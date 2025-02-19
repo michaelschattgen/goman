@@ -10,19 +10,22 @@ rootCommand.AddCommand(initCommand);
 
 var addPackageCommand = new Command("add", "Adds and tracks a new NuGet package in a local source");
 
-var packageOption = new Option<string>("package", "Path to the .nupkg file");
+var packageOption = new Option<string?>("package", "Path to the .nupkg file");
 var sourceOption = new Option<string>("source", "Name of the NuGet source");
+var configOption = new Option<string>("-c", () => "Debug", "Specify build configuration to look for (Debug/Release)");
 addPackageCommand.AddOption(packageOption);
 addPackageCommand.AddOption(sourceOption);
-addPackageCommand.SetHandler(
-    AddPackageCommand.Execute,
-    packageOption,
-    sourceOption
-);
+addPackageCommand.AddOption(configOption);
+addPackageCommand.SetHandler((string? package, string source, string config) =>
+    AddPackageCommand.Execute(package, source, config),
+    packageOption, sourceOption, configOption);
+
 rootCommand.AddCommand(addPackageCommand);
 
 var updateCommand = new Command("update", "Checks for new package versions and adds them if needed.");
-updateCommand.SetHandler(UpdateCommand.Execute);
+var allOption = new Option<bool>("--all", "Automatically add all detected new versions without confirmation");
+updateCommand.AddOption(allOption);
+updateCommand.SetHandler(UpdateCommand.Execute, allOption);
 rootCommand.AddCommand(updateCommand);
 
 var listSourcesCommand = new Command("list-sources", "List saved NuGet sources that numan keeps track of");

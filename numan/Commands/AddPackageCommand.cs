@@ -8,8 +8,23 @@ namespace numan.Commands;
 
 public static class AddPackageCommand
 {
-    public static void Execute(string packagePath, string sourceName)
+    public static void Execute(string? packagePath, string sourceName, string configuration = "Release")
     {
+        string? relativePath;
+        if (string.IsNullOrWhiteSpace(packagePath))
+        {
+            packagePath = FindLatestNuGetPackage(configuration);
+            if (string.IsNullOrWhiteSpace(packagePath))
+            {
+                AnsiConsole.MarkupLine($"[red]Error: No .nupkg file found in bin/{configuration}.[/]");
+                return;
+            }
+
+            relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), packagePath);
+            string fileName=  Path.GetFileName(packagePath);
+            AnsiConsole.MarkupLine($"[cyan]Automatically detected package:[/] {fileName}");
+        }
+
         if (!File.Exists(packagePath))
         {
             AnsiConsole.MarkupLine($"[red]Error: Package '{packagePath}' does not exist[/]");
@@ -62,6 +77,16 @@ public static class AddPackageCommand
         }
     }
 
+    private static string? FindLatestNuGetPackage(string configuration)
+    {
+        string path = Path.Combine(Directory.GetCurrentDirectory(), "bin", configuration);
+        if (!Directory.Exists(path)) return null;
+
+        return Directory.GetFiles(path, "*.nupkg")
+                       .OrderByDescending(File.GetLastWriteTime)
+                       .FirstOrDefault();
+    }
+
     private static bool AddPackageToNuGet(string packagePath, string sourcePath)
     {
         try
@@ -87,7 +112,8 @@ public static class AddPackageCommand
 
             if (process.ExitCode == 0)
             {
-                AnsiConsole.MarkupLine($"[green]Successfully added package:[/] {packagePath}");
+                string relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), packagePath);
+                AnsiConsole.MarkupLine($"[green]Successfully added package:[/] {relativePath}");
                 return true;
             }
             else

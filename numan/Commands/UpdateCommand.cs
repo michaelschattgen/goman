@@ -6,7 +6,7 @@ namespace numan.Commands;
 
 public static class UpdateCommand
 {
-    public static void Execute()
+    public static void Execute(bool autoAccept = false)
     {
         var config = ConfigManager.Config;
 
@@ -29,9 +29,9 @@ public static class UpdateCommand
             var installedPackages = NuGetUtils.GetInstalledPackages(source.Value);
             foreach (var package in installedPackages)
             {
-                if (!latestPackages.ContainsKey(package.Key) || string.Compare(package.Value, latestPackages[package.Key], StringComparison.OrdinalIgnoreCase) > 0)
+                if (!latestPackages.ContainsKey(package.Key.ToLower()) || string.Compare(package.Value, latestPackages[package.Key.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
                 {
-                    latestPackages[package.Key.ToLower()] = package.Value.ToLower();
+                    latestPackages[package.Key.ToLower()] = package.Value;
                 }
             }
         }
@@ -53,7 +53,7 @@ public static class UpdateCommand
                     string packageName = match.Groups[1].Value;
                     string packageVersion = match.Groups[2].Value;
 
-                    if (!latestPackages.ContainsKey(packageName.ToLower()) || string.Compare(packageVersion, latestPackages[packageName], StringComparison.OrdinalIgnoreCase) > 0)
+                    if (!latestPackages.ContainsKey(packageName.ToLower()) || string.Compare(packageVersion, latestPackages[packageName.ToLower()], StringComparison.OrdinalIgnoreCase) > 0)
                     {
                         newPackages.Add((packageName, packageVersion, file));
                     }
@@ -78,13 +78,13 @@ public static class UpdateCommand
             table.AddRow(
                 $"[cyan]{name}[/]",
                 $"[green]{version}[/]",
-                latestPackages.ContainsKey(name) ? $"[yellow]{latestPackages[name]}[/]" : "[gray]Not Installed[/]"
+                latestPackages.ContainsKey(name.ToLower()) ? $"[yellow]{latestPackages[name.ToLower()]}[/]" : "[gray]Not Installed[/]"
             );
         }
 
         AnsiConsole.Write(table);
 
-        if (AnsiConsole.Confirm("[blue]Do you want to add these new versions to the NuGet source?[/]"))
+        if (autoAccept || AnsiConsole.Confirm("[blue]Do you want to add these new versions to the NuGet source?[/]"))
         {
             foreach (var (name, version, path) in newPackages)
             {
