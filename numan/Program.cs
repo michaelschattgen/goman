@@ -23,8 +23,10 @@ rootCommand.AddCommand(addPackageCommand);
 
 var updateCommand = new Command("update", "Checks for new package versions and adds them if needed.");
 var allOption = new Option<bool>("--all", "Automatically add all detected new versions without confirmation");
+var selectionOption = new Option<bool>("--allow-selection", "Manually select which packages to update");
 updateCommand.AddOption(allOption);
-updateCommand.SetHandler(new UpdateCommand().Execute, allOption);
+updateCommand.AddOption(selectionOption);
+updateCommand.SetHandler(new UpdateCommand().Execute, allOption, selectionOption);
 rootCommand.AddCommand(updateCommand);
 
 var listSourcesCommand = new Command("list-sources", "List saved NuGet sources that numan keeps track of");

@@ -6,10 +6,10 @@ namespace Numan.Commands;
 
 public class UpdateCommand : BaseCommand
 {
-    public void Execute(bool autoAccept = false)
+    public void Execute(bool autoAccept = false, bool allowSelection = false)
     {
         PreExecute();
-        
+
         var config = ConfigManager.Config;
 
         if (config.NugetSources.Count == 0)
@@ -86,15 +86,44 @@ public class UpdateCommand : BaseCommand
 
         AnsiConsole.Write(table);
 
-        if (autoAccept || AnsiConsole.Confirm("[blue]Do you want to add these new versions to the NuGet source?[/]"))
+        List<(string Name, string Version, string Path)> selectedPackages = new();
+
+        if (allowSelection)
         {
-            foreach (var (name, version, path) in newPackages)
+            var packageChoices = newPackages
+                .Select(p => new SelectionPrompt<(string, string, string)>()
+                    .Title("Select packages to add (use space to select, Enter to confirm):")
+                    .PageSize(10)
+                    .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
+                    .AddChoices(newPackages)
+                    .UseConverter(p => $"{p.Item1} {p.Item2}")
+                ).ToList();
+
+            selectedPackages = AnsiConsole.Prompt(new MultiSelectionPrompt<(string, string, string)>()
+                .Title("[blue]Select packages to add (use space to select, Enter to confirm):[/]")
+                .PageSize(10)
+                .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")
+                .InstructionsText("[gray](Press [blue]<space>[/] to select, [green]<enter>[/] to confirm)[/]")
+                .AddChoices(newPackages)
+                .UseConverter(p => $"{p.Item1} {p.Item2}")
+            );
+        }
+        else
+        {
+            selectedPackages = newPackages;
+        }
+
+        if (!autoAccept && !allowSelection && !AnsiConsole.Confirm("[blue]Do you want to add these new versions to the NuGet source?[/]"))
+        {
+            return;
+        }
+
+        foreach (var (name, version, path) in selectedPackages)
+        {
+            var source = config.NugetSources.FirstOrDefault();
+            if (source != null)
             {
-                var source = config.NugetSources.FirstOrDefault();
-                if (source != null)
-                {
-                    new AddPackageCommand().Execute(path, source.Name ?? source.Value);
-                }
+                new AddPackageCommand().Execute(path, source.Name ?? source.Value);
             }
         }
     }
