@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using numan.Config;
 using numan.Utils;
 using Spectre.Console;
 
@@ -7,21 +8,14 @@ namespace numan.Commands;
 
 public static class InitCommand
 {
-    private static readonly string ConfigFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".numan");
-
     public static void Execute()
     {
         AnsiConsole.MarkupLine("[blue]Initializing numan...[/]");
         var sources = NuGetUtils.DetectNuGetSources();
 
-        var config = new
-        {
-            nugetSources = sources,
-            monitoredFolders = new List<string>()
-        };
-
-        var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-        File.WriteAllText(ConfigFilePath, json);
+        var config = ConfigManager.Config;
+        config.NugetSources = sources;
+        ConfigManager.SaveConfig();
 
         foreach (var source in sources)
         {
@@ -29,6 +23,6 @@ public static class InitCommand
         }
 
         AnsiConsole.MarkupLine("[green]numan initialized![/]");
-        AnsiConsole.MarkupLine($"[yellow]Config saved at: {ConfigFilePath}[/]");
+        AnsiConsole.MarkupLine($"[yellow]Config saved at: {ConfigManager.ConfigFilePath}[/]");
     }
 }

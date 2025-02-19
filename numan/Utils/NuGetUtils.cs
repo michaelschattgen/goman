@@ -1,13 +1,14 @@
 using System;
 using System.Xml;
+using numan.Models;
 
 namespace numan.Utils;
 
 public static class NuGetUtils
 {
-    public static List<NuGetSource> DetectNuGetSources()
+    public static List<NugetSource> DetectNuGetSources()
     {
-        List<NuGetSource> sources = new();
+        List<NugetSource> sources = new();
         string configPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "NuGet", "NuGet.Config");
 
         if (!File.Exists(configPath))
@@ -32,11 +33,11 @@ public static class NuGetUtils
                     {
                         if (!string.IsNullOrEmpty(name))
                         {
-                            sources.Add(new NuGetSource(value, name));
+                            sources.Add(new NugetSource(value, name));
                         }
                         else
                         {
-                            sources.Add(new NuGetSource(value, null));
+                            sources.Add(new NugetSource(value));
                         }
                     }
                 }
@@ -49,6 +50,4 @@ public static class NuGetUtils
 
         return sources;
     }
-
-    public record NuGetSource(string Value, string? Name);
 }
