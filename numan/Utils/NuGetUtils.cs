@@ -60,13 +60,13 @@ public static class NuGetUtils
     public static List<PackageInfo> GetInstalledPackages(string sourcePath, bool includeAllVersions = false)
     {
         var packages = new Dictionary<string, PackageInfo>();
+        var config = Config.ConfigManager.Config;
 
         if (!Directory.Exists(sourcePath))
             throw new DirectoryNotFoundException($"NuGet source directory not found: {sourcePath}");
 
         bool isHierarchical = Directory.GetDirectories(sourcePath).Any();
-
-        if (isHierarchical)
+        if (config.NugetSources.Any(x => x.Name == sourcePath) && isHierarchical)
         {
             foreach (var packageDir in Directory.GetDirectories(sourcePath))
             {

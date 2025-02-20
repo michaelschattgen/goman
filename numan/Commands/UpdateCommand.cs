@@ -8,7 +8,7 @@ namespace Numan.Commands;
 
 public class UpdateCommand : BaseCommand
 {
-    public void Execute(bool autoAccept = false, bool allowSelection = false)
+    public void Execute(string? sourceName, bool autoAccept = false, bool allowSelection = false)
     {
         PreExecute();
 
@@ -20,6 +20,13 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
+        if (config.NugetSources.Count > 1)
+        {
+            var defaultSource = ConfigManager.GetDefaultSource();
+            sourceName = defaultSource.Name ?? defaultSource.Value;
+            AnsiConsole.MarkupLine($"[yellow]Multiple local NuGet sources found, using default source ({sourceName}). You can override this by using the --source parameter.[/]");
+        }
+
         if (config.MonitoredFolders.Count == 0)
         {
             AnsiConsole.MarkupLine("[yellow]No monitored folders configured. Use 'numan add' to track package folders.[/]");
@@ -27,7 +34,7 @@ public class UpdateCommand : BaseCommand
         }
 
         List<PackageInfo> installedPackages = new();
-        foreach (var source in config.NugetSources)
+        foreach (var source in config.NugetSources.Where(x => x.Name == sourceName))
         {
             installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, includeAllVersions: false));
         }
@@ -36,12 +43,10 @@ public class UpdateCommand : BaseCommand
         foreach (var folder in config.MonitoredFolders)
         {
             if (!Directory.Exists(folder)) continue;
-
             monitoredPackages.AddRange(NuGetUtils.GetInstalledPackages(folder, includeAllVersions: true));
         }
 
         var newPackages = new List<(PackageInfo Package, NuGetVersion NewVersion, string FilePath, bool isInstalled)>();
-
         foreach (var monitoredPackage in monitoredPackages)
         {
             var installedPackage = installedPackages.FirstOrDefault(p => p.Name.ToLower() == monitoredPackage.Name.ToLower());
@@ -55,7 +60,7 @@ public class UpdateCommand : BaseCommand
                 newPackages.Add((monitoredPackage, latestMonitoredVersion, packageFilePath, isInstalled: false));
 
                 AnsiConsole.MarkupLine($"[green]New package detected:[/] {monitoredPackage.Name} {latestMonitoredVersion}");
-            } 
+            }
             else if (latestMonitoredVersion > (installedPackage.GetLatestVersion() ?? new NuGetVersion("0.0.0")))
             {
                 string packageFilePath = monitoredPackage.GetPackageFilePath(latestMonitoredVersion);

@@ -22,11 +22,13 @@ addPackageCommand.SetHandler((string? package, string source, string config) =>
 rootCommand.AddCommand(addPackageCommand);
 
 var updateCommand = new Command("update", "Checks for new package versions and adds them if needed.");
+var updateSourceOption = new Option<string>("source", "Name of the NuGet source");
 var allOption = new Option<bool>("--all", "Automatically add all detected new versions without confirmation");
 var selectionOption = new Option<bool>("--allow-selection", "Manually select which packages to update");
+updateCommand.AddOption(updateSourceOption);
 updateCommand.AddOption(allOption);
 updateCommand.AddOption(selectionOption);
-updateCommand.SetHandler(new UpdateCommand().Execute, allOption, selectionOption);
+updateCommand.SetHandler(new UpdateCommand().Execute, updateSourceOption, allOption, selectionOption);
 rootCommand.AddCommand(updateCommand);
 
 var listSourcesCommand = new Command("list-sources", "List saved NuGet sources that numan keeps track of");
