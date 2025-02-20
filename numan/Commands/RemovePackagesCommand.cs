@@ -1,3 +1,4 @@
+using NuGet.Versioning;
 using Numan.Config;
 using Numan.Models;
 using Numan.Utils;
@@ -24,7 +25,7 @@ public class RemovePackagesCommand : BaseCommand
             installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, !deleteAllVersions));
         }
 
-        List<PackageInfo> selectedPackages = new();
+        List<PackageInfo> selectedPackages;
 
         if (deleteAllVersions)
         {
@@ -48,7 +49,7 @@ public class RemovePackagesCommand : BaseCommand
                 .ToList();
 
             var selectedPackageChoices = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<(PackageInfo, Version)>()
+                new MultiSelectionPrompt<(PackageInfo, NuGetVersion)>()
                     .Title("[blue]Select package versions to delete:[/]")
                     .PageSize(10)
                     .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")

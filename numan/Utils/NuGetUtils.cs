@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using System.Xml;
+using NuGet.Versioning;
 using Numan.Models;
 
 namespace Numan.Utils;
@@ -62,10 +63,11 @@ public static class NuGetUtils
             return new List<PackageInfo>();
         }
 
-        var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg");
+        var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg", SearchOption.AllDirectories);
         foreach (var file in packageFiles)
         {
             string fileName = Path.GetFileName(file);
+            string absolutePath = Path.GetFullPath(file);
             var match = PackageFileRegex.Match(fileName);
 
             if (match.Success)
@@ -75,10 +77,10 @@ public static class NuGetUtils
 
                 if (!packages.ContainsKey(packageName))
                 {
-                    packages[packageName] = new PackageInfo(packageName, sourcePath, file, new List<string>());
+                    packages[packageName] = new PackageInfo(packageName, sourcePath, sourcePath, new List<string>());
                 }
 
-                packages[packageName].Versions.Add(Version.Parse(packageVersion));
+                packages[packageName].Versions.Add(NuGetVersion.Parse(packageVersion));
             }
         }
 

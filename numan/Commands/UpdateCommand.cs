@@ -1,3 +1,4 @@
+using NuGet.Versioning;
 using Numan.Config;
 using Numan.Models;
 using Numan.Utils;
@@ -39,7 +40,7 @@ public class UpdateCommand : BaseCommand
             monitoredPackages.AddRange(NuGetUtils.GetInstalledPackages(folder, includeAllVersions: true));
         }
 
-        var newPackages = new List<(PackageInfo Package, Version NewVersion, string FilePath, bool isInstalled)>();
+        var newPackages = new List<(PackageInfo Package, NuGetVersion NewVersion, string FilePath, bool isInstalled)>();
 
         foreach (var monitoredPackage in monitoredPackages)
         {
@@ -55,13 +56,12 @@ public class UpdateCommand : BaseCommand
 
                 AnsiConsole.MarkupLine($"[green]New package detected:[/] {monitoredPackage.Name} {latestMonitoredVersion}");
             } 
-            else if (latestMonitoredVersion > installedPackage.GetLatestVersion())
+            else if (latestMonitoredVersion > (installedPackage.GetLatestVersion() ?? new NuGetVersion("0.0.0")))
             {
                 string packageFilePath = monitoredPackage.GetPackageFilePath(latestMonitoredVersion);
                 newPackages.Add((installedPackage, latestMonitoredVersion, packageFilePath, isInstalled: true));
 
                 AnsiConsole.MarkupLine($"[green]New version detected:[/] {monitoredPackage.Name} {latestMonitoredVersion}");
-
             }
         }
 
@@ -87,12 +87,12 @@ public class UpdateCommand : BaseCommand
 
         AnsiConsole.Write(table);
 
-        List<(PackageInfo Package, Version NewVersion, string FilePath, bool isInstalled)> selectedPackages = new();
+        List<(PackageInfo Package, NuGetVersion NewVersion, string FilePath, bool isInstalled)> selectedPackages;
 
         if (allowSelection)
         {
             selectedPackages = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<(PackageInfo, Version, string, bool)>()
+                new MultiSelectionPrompt<(PackageInfo, NuGetVersion, string, bool)>()
                     .Title("[blue]Select packages to update (use space to select, Enter to confirm):[/]")
                     .PageSize(10)
                     .MoreChoicesText("[gray](Move up and down to reveal more packages)[/]")

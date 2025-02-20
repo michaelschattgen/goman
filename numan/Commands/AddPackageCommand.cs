@@ -11,7 +11,6 @@ public class AddPackageCommand : BaseCommand
     {
         PreExecute();
 
-        string? relativePath;
         if (string.IsNullOrWhiteSpace(packagePath))
         {
             packagePath = FindLatestNuGetPackage(configuration);
@@ -21,8 +20,7 @@ public class AddPackageCommand : BaseCommand
                 return;
             }
 
-            relativePath = Path.GetRelativePath(Directory.GetCurrentDirectory(), packagePath);
-            string fileName=  Path.GetFileName(packagePath);
+            string fileName = Path.GetFileName(packagePath);
             AnsiConsole.MarkupLine($"[cyan]Automatically detected package:[/] {fileName}");
         }
 
@@ -83,9 +81,7 @@ public class AddPackageCommand : BaseCommand
         string path = Path.Combine(Directory.GetCurrentDirectory(), "bin", configuration);
         if (!Directory.Exists(path)) return null;
 
-        return Directory.GetFiles(path, "*.nupkg")
-                       .OrderByDescending(File.GetLastWriteTime)
-                       .FirstOrDefault();
+        return Directory.GetFiles(path, "*.nupkg").MaxBy(File.GetLastWriteTime);
     }
 
     private static bool AddPackageToNuGet(string packagePath, string sourcePath)
@@ -117,11 +113,9 @@ public class AddPackageCommand : BaseCommand
                 AnsiConsole.MarkupLine($"[green]Successfully added package:[/] {relativePath}");
                 return true;
             }
-            else
-            {
-                AnsiConsole.MarkupLine($"[red]Failed to add package:[/] {error}");
-                return false;
-            }
+
+            AnsiConsole.MarkupLine($"[red]Failed to add package:[/] {error}");
+            return false;
         }
         catch (Exception ex)
         {
