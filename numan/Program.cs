@@ -11,7 +11,7 @@ var addPackageCommand = new Command("add", "Adds and tracks a new NuGet package 
 
 var packageOption = new Option<string?>("package", "Path to the .nupkg file");
 var sourceOption = new Option<string>("--source", "Name of the NuGet source");
-var configOption = new Option<string>("-c", () => "Debug", "Specify build configuration to look for (Debug/Release)");
+var configOption = new Option<string>("--configuration", () => "Debug", "Specify build configuration to look for (Debug/Release)");
 addPackageCommand.AddOption(packageOption);
 addPackageCommand.AddOption(sourceOption);
 addPackageCommand.AddOption(configOption);
@@ -49,12 +49,15 @@ removePackagesCommand.AddOption(allVersionsOption);
 removePackagesCommand.SetHandler(new RemovePackagesCommand().Execute, removeSourceOption, allVersionsOption);
 rootCommand.AddCommand(removePackagesCommand);
 
-var showConfigCommand = new Command("show-config", "Displays the current Numan configuration");
+var configCommand = new Command("config", "Manage Numan configuration");
+var showConfigCommand = new Command("show", "Displays the current Numan configuration");
 showConfigCommand.SetHandler(new ShowConfigCommand().Execute);
-rootCommand.AddCommand(showConfigCommand);
+configCommand.AddCommand(showConfigCommand);
 
-var setDefaultSourceCommand = new Command("set-default-source", "Change the default NuGet source (if multiple sources exist)");
+var setDefaultSourceCommand = new Command("set-default", "Change the default NuGet source (if multiple sources exist)");
 setDefaultSourceCommand.SetHandler(new SetDefaultSourceCommand().Execute);
-rootCommand.AddCommand(setDefaultSourceCommand);
+configCommand.AddCommand(setDefaultSourceCommand);
+
+rootCommand.AddCommand(configCommand);
 
 rootCommand.Invoke(args);
