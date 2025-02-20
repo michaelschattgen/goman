@@ -49,4 +49,8 @@ var showConfigCommand = new Command("show-config", "Displays the current NuMan c
 showConfigCommand.SetHandler(new ShowConfigCommand().Execute);
 rootCommand.AddCommand(showConfigCommand);
 
+var setDefaultSourceCommand = new Command("set-default-source", "Change the default NuGet source (if multiple sources exist)");
+setDefaultSourceCommand.SetHandler(new SetDefaultSourceCommand().Execute);
+rootCommand.AddCommand(setDefaultSourceCommand);
+
 rootCommand.Invoke(args);
