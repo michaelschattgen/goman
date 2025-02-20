@@ -1,12 +1,15 @@
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Linq;
 using NuGet.Versioning;
 using Numan.Models;
+using Spectre.Console;
 
 namespace Numan.Utils;
 
 public static class NuGetUtils
 {
+    private static readonly XNamespace ns = "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd";
     public static Regex PackageFileRegex = new Regex(@"^(?<name>.*)\.(?<version>\d+\.\d+\.\d+(-[a-zA-Z0-9-.]+)?)\.nupkg$", RegexOptions.Compiled);
 
     public static List<NugetSource> DetectNuGetSources()
@@ -57,45 +60,102 @@ public static class NuGetUtils
     public static List<PackageInfo> GetInstalledPackages(string sourcePath, bool includeAllVersions = false)
     {
         var packages = new Dictionary<string, PackageInfo>();
+
         if (!Directory.Exists(sourcePath))
-        {
-            Console.WriteLine($"[red]Error: NuGet source folder not found: {sourcePath}[/]");
-            return new List<PackageInfo>();
-        }
+            throw new DirectoryNotFoundException($"NuGet source directory not found: {sourcePath}");
 
-        var packageFiles = Directory.GetFiles(sourcePath, "*.nupkg", SearchOption.AllDirectories);
-        foreach (var file in packageFiles)
-        {
-            string fileName = Path.GetFileName(file);
-            string absolutePath = Path.GetFullPath(file);
-            var match = PackageFileRegex.Match(fileName);
+        bool isHierarchical = Directory.GetDirectories(sourcePath).Any();
 
-            if (match.Success)
+        if (isHierarchical)
+        {
+            foreach (var packageDir in Directory.GetDirectories(sourcePath))
             {
-                string packageName = match.Groups[2].Value;
-                string packageVersion = match.Groups[3].Value;
-
-                if (!packages.ContainsKey(packageName))
+                string packageName = Path.GetFileName(packageDir);
+                foreach (var versionDir in Directory.GetDirectories(packageDir))
                 {
-                    packages[packageName] = new PackageInfo(packageName, sourcePath, sourcePath, new List<string>());
-                }
+                    NuGetVersion version = NuGetVersion.Parse(Path.GetFileName(versionDir));
 
-                packages[packageName].Versions.Add(NuGetVersion.Parse(packageVersion));
+                    string? nuspecPath = Directory.GetFiles(versionDir, "*.nuspec").FirstOrDefault();
+                    if (!string.IsNullOrEmpty(nuspecPath))
+                    {
+                        var (id, ver) = ParseNuspec(nuspecPath);
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            packageName = id;
+                            version = ver;
+                        }
+                    }
+
+                    string? nupkgPath = Directory.GetFiles(versionDir, "*.nupkg").FirstOrDefault();
+                    if (!string.IsNullOrEmpty(nupkgPath))
+                    {
+                        if (!packages.ContainsKey(packageName))
+                        {
+                            packages[packageName] = new PackageInfo(packageName, sourcePath, nupkgPath, new List<string>());
+                        }
+                        packages[packageName].Versions.Add(version);
+                    }
+                }
+            }
+        }
+        else
+        {
+            foreach (var nupkgPath in Directory.GetFiles(sourcePath, "*.nupkg"))
+            {
+                string fileName = Path.GetFileName(nupkgPath);
+                string absolutePath = Path.GetFullPath(nupkgPath);
+                var match = PackageFileRegex.Match(fileName);
+
+                if (match.Success)
+                {
+                    string packageName = match.Groups[2].Value;
+                    string packageVersion = match.Groups[3].Value;
+
+                    if (!packages.ContainsKey(packageName))
+                    {
+                        packages[packageName] = new PackageInfo(packageName, sourcePath, sourcePath, new List<string>());
+                    }
+
+                    packages[packageName].Versions.Add(NuGetVersion.Parse(packageVersion));
+                }
+            }
+
+            foreach (var package in packages.Values)
+            {
+                package.Versions.Sort((a, b) => b.CompareTo(a));
             }
         }
 
-        foreach (var package in packages.Values)
-        {
-            package.Versions.Sort((a, b) => b.CompareTo(a));
-        }
+        return includeAllVersions
+                    ? packages.Values.ToList()
+                    : packages.Values
+                        .Select(p => new PackageInfo(
+                            p.Name,
+                            p.Source,
+                            p.PackagePath,
+                            new List<string> { p.GetLatestVersion()?.ToString() ?? "0.0.0" }))
+                        .ToList();
+    }
 
-        if (!includeAllVersions)
+    private static (string id, NuGetVersion version) ParseNuspec(string nuspecPath)
+    {
+        try
         {
-            return packages.Values
-                .Select(p => new PackageInfo(p.Name, p.Source, p.PackagePath, new List<string> { p.GetLatestVersion()?.ToString() ?? "0.0.0" }))
-                .ToList();
-        }
+            XDocument doc = XDocument.Load(nuspecPath);
+            XElement? metadata = doc.Root?.Element(ns + "metadata");
 
-        return packages.Values.ToList();
+            if (metadata != null)
+            {
+                string id = metadata.Element(ns + "id")?.Value ?? string.Empty;
+                string versionString = metadata.Element(ns + "version")?.Value ?? string.Empty;
+                NuGetVersion version = NuGetVersion.Parse(versionString);
+                return (id, version);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading .nuspec: {nuspecPath} - {ex.Message}");
+        }
+        return (string.Empty, new NuGetVersion("0.0.0"));
     }
 }
