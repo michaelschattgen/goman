@@ -9,29 +9,25 @@ public class ListPackagesCommand : BaseCommand
 {
     public void Execute(string sourceName)
     {
-        PreExecute();
+        PreExecute(sourceName);
 
         var config = ConfigManager.Config;
-        NugetSource? source;
+        NugetSource? source = null;
 
         if (string.IsNullOrWhiteSpace(sourceName))
         {
             if (config.NugetSources.Count > 1)
             {
-                AnsiConsole.MarkupLine($"[red]Please specify a source.[/]");
-                return;
+                var defaultSource = ConfigManager.GetDefaultSource();
+                sourceName = defaultSource.Name ?? defaultSource.Value;
+                AnsiConsole.MarkupLine($"[yellow]Multiple local NuGet sources found, using default source ({sourceName}). You can override this by using the --source parameter.[/]");
             }
 
             source = config.NugetSources.FirstOrDefault();
         }
         else
         {
-            source = config.NugetSources.Find(s => s.Name != null && s.Name.Equals(sourceName, StringComparison.OrdinalIgnoreCase));
-            if (source == null)
-            {
-                AnsiConsole.MarkupLine($"[red]Error: NuGet source '{sourceName}' not found.[/]");
-                return;
-            }
+            source = config.NugetSources.FirstOrDefault(x => x.Name == sourceName || x.Value == sourceName);
         }
 
         if (source == null)

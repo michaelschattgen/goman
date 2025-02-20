@@ -66,7 +66,7 @@ public static class NuGetUtils
             throw new DirectoryNotFoundException($"NuGet source directory not found: {sourcePath}");
 
         bool isHierarchical = Directory.GetDirectories(sourcePath).Any();
-        if (config.NugetSources.Any(x => x.Name == sourcePath) && isHierarchical)
+        if (config.NugetSources.Any(x => x.Name == sourcePath || x.Value == sourcePath) && isHierarchical)
         {
             foreach (var packageDir in Directory.GetDirectories(sourcePath))
             {

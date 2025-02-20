@@ -9,7 +9,7 @@ public class AddPackageCommand : BaseCommand
 {
     public void Execute(string? packagePath, string sourceName, string configuration = "Release")
     {
-        PreExecute();
+        PreExecute(sourceName);
 
         if (string.IsNullOrWhiteSpace(packagePath))
         {
@@ -31,7 +31,7 @@ public class AddPackageCommand : BaseCommand
         }
 
         var config = ConfigManager.Config;
-        NugetSource? source;
+        NugetSource? source = null;
 
         if (string.IsNullOrWhiteSpace(sourceName))
         {
@@ -42,15 +42,6 @@ public class AddPackageCommand : BaseCommand
             }
 
             source = config.NugetSources.FirstOrDefault();
-        }
-        else
-        {
-            source = config.NugetSources.Find(s => s.Name != null && s.Name.Equals(sourceName, StringComparison.OrdinalIgnoreCase));
-            if (source == null)
-            {
-                AnsiConsole.MarkupLine($"[red]Error: NuGet source '{sourceName}' not found.[/]");
-                return;
-            }
         }
 
         if (source == null)

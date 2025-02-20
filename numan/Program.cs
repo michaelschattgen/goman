@@ -10,7 +10,7 @@ rootCommand.AddCommand(initCommand);
 var addPackageCommand = new Command("add", "Adds and tracks a new NuGet package in a local source");
 
 var packageOption = new Option<string?>("package", "Path to the .nupkg file");
-var sourceOption = new Option<string>("source", "Name of the NuGet source");
+var sourceOption = new Option<string>("--source", "Name of the NuGet source");
 var configOption = new Option<string>("-c", () => "Debug", "Specify build configuration to look for (Debug/Release)");
 addPackageCommand.AddOption(packageOption);
 addPackageCommand.AddOption(sourceOption);
@@ -22,7 +22,7 @@ addPackageCommand.SetHandler((string? package, string source, string config) =>
 rootCommand.AddCommand(addPackageCommand);
 
 var updateCommand = new Command("update", "Checks for new package versions and adds them if needed.");
-var updateSourceOption = new Option<string>("source", "Name of the NuGet source");
+var updateSourceOption = new Option<string>("--source", "Name of the NuGet source");
 var allOption = new Option<bool>("--all", "Automatically add all detected new versions without confirmation");
 var selectionOption = new Option<bool>("--allow-selection", "Manually select which packages to update");
 updateCommand.AddOption(updateSourceOption);
@@ -36,15 +36,17 @@ listSourcesCommand.SetHandler(new ListSourcesCommand().Execute);
 rootCommand.AddCommand(listSourcesCommand);
 
 var listPackagesCommand = new Command("list", "Lists installed NuGet packages with their latest versions");
-var listPackagesSourceOption = new Option<string>("source", "Name of the NuGet source");
+var listPackagesSourceOption = new Option<string>("--source", "Name of the NuGet source");
 listPackagesCommand.AddOption(listPackagesSourceOption);
 listPackagesCommand.SetHandler(new ListPackagesCommand().Execute, listPackagesSourceOption);
 rootCommand.AddCommand(listPackagesCommand);
 
 var removePackagesCommand = new Command("remove", "Remove or delete packages from the local NuGet source");
+var removeSourceOption = new Option<string>("--source", "Name of the NuGet source");
 var allVersionsOption = new Option<bool>("--all-versions", "Delete entire packages, including all versions");
+removePackagesCommand.AddOption(removeSourceOption);
 removePackagesCommand.AddOption(allVersionsOption);
-removePackagesCommand.SetHandler(new RemovePackagesCommand().Execute, allVersionsOption);
+removePackagesCommand.SetHandler(new RemovePackagesCommand().Execute, removeSourceOption, allVersionsOption);
 rootCommand.AddCommand(removePackagesCommand);
 
 var showConfigCommand = new Command("show-config", "Displays the current Numan configuration");

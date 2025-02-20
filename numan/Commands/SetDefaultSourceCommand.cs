@@ -7,6 +7,8 @@ public class SetDefaultSourceCommand : BaseCommand
 {
     public void Execute()
     {
+        PreExecute();
+        
         var config = ConfigManager.Config;
         var oldDefaultSource = config.NugetSources.FirstOrDefault(x => x.IsDefault);
 
