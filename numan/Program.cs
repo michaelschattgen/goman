@@ -45,7 +45,7 @@ removePackagesCommand.AddOption(allVersionsOption);
 removePackagesCommand.SetHandler(new RemovePackagesCommand().Execute, allVersionsOption);
 rootCommand.AddCommand(removePackagesCommand);
 
-var showConfigCommand = new Command("show-config", "Displays the current NuMan configuration");
+var showConfigCommand = new Command("show-config", "Displays the current Numan configuration");
 showConfigCommand.SetHandler(new ShowConfigCommand().Execute);
 rootCommand.AddCommand(showConfigCommand);
 
