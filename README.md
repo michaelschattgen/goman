@@ -38,12 +38,12 @@ numan init
 To add a `.nupkg` package to a local NuGet source, use:
 
 ```sh
-numan add --package <package-path> --source <source> -c <configuration>
+numan add --package <package-path> --source <source> --configuration <configuration>
 ```
 
 - `--package` (optional): Path to the `.nupkg` file.
 - `--source`: Name of the NuGet source.
-- `-c`: Specify build configuration (default: Debug).
+- `--configuration`: Specify build configuration (default: Debug).
 
 If no package path is specified, Numan automatically detects `.nupkg` files in `bin/Debug` or `bin/Release`.
 
@@ -68,7 +68,7 @@ numan list-sources
 To check for and add new package versions:
 
 ```sh
-numan update
+numan update --source <source>
 ```
 
 To update all new versions automatically without prompts:
@@ -88,7 +88,7 @@ numan update --allow-selection
 To remove or delete packages from the local NuGet source:
 
 ```sh
-numan remove --all-versions
+numan remove --source <source> --all-versions
 ```
 
 - `--all-versions`: Deletes the entire package, including all versions.
@@ -98,7 +98,7 @@ numan remove --all-versions
 To display the current Numan configuration:
 
 ```sh
-numan show-config
+numan config show
 ```
 
 ### Set Default Source
@@ -106,12 +106,12 @@ numan show-config
 To change the default NuGet source (if multiple sources exist):
 
 ```sh
-numan set-default-source
+numan config set-default
 ```
 
 ## Configuration
 
-Numan stores configuration in `~/.numan/config.json`. This file tracks monitored package folders and NuGet sources. You can manually edit it if needed.
+Numan stores configuration in `~/.numan`. This file tracks monitored package folders and NuGet sources. You can manually edit it if needed.
 
 ## Contributing
 
