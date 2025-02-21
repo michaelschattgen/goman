@@ -21,22 +21,22 @@ public class RemovePackagesCommand : BaseCommand
 
         if (string.IsNullOrWhiteSpace(sourceName))
         {
+            var defaultSource = ConfigManager.GetDefaultSource();
+            sourceName = defaultSource.Name ?? defaultSource.Value;
+
             if (config.NugetSources.Count > 1)
             {
-                var defaultSource = ConfigManager.GetDefaultSource();
-                sourceName = defaultSource.Name ?? defaultSource.Value;
                 AnsiConsole.MarkupLine($"[yellow]Multiple local NuGet sources found, using default source ({sourceName}). You can override this by using the --source parameter.[/]");
             }
         }
 
         List<PackageInfo> installedPackages = new();
-        foreach (var source in config.NugetSources.Where(x => x.Name == sourceName || x.Value == sourceName))
+        foreach (var nugetSource in config.NugetSources.Where(x => x.Name == sourceName || x.Value == sourceName))
         {
-            installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, !deleteAllVersions));
+            installedPackages.AddRange(NuGetUtils.GetInstalledPackages(nugetSource.Value, !deleteAllVersions));
         }
 
         List<PackageInfo> selectedPackages;
-
         if (deleteAllVersions)
         {
             var selectedPackageNames = AnsiConsole.Prompt(
