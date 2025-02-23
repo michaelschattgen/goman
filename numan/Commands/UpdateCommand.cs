@@ -118,11 +118,7 @@ public class UpdateCommand : BaseCommand
 
         foreach (var (package, newVersion, filePath, isInstalled) in selectedPackages)
         {
-            var source = config.NugetSources.FirstOrDefault();
-            if (source != null)
-            {
-                new AddPackageCommand().Execute(filePath, source.Name ?? ConfigManager.GetDefaultSource().Value);
-            }
+            new AddPackageCommand().Execute(filePath, sourceName ?? "");
         }
     }
 }

@@ -73,10 +73,7 @@ public class RemovePackagesCommand : BaseCommand
                 .Distinct()
                 .ToList();
 
-            foreach (var (package, version) in selectedPackageChoices)
-            {
-                package.Versions.Remove(version);
-            }
+            AnsiConsole.MarkupLine($"[yellow]{selectedPackageChoices.FirstOrDefault()}[/]");
         }
 
         if (selectedPackages.Count == 0)

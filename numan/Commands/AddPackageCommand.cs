@@ -43,6 +43,10 @@ public class AddPackageCommand : BaseCommand
 
             source = config.NugetSources.FirstOrDefault();
         }
+        else
+        {
+            source = config.NugetSources.FirstOrDefault(x => x.Name == sourceName);
+        }
 
         if (source == null)
         {
