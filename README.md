@@ -6,7 +6,7 @@ Numan is a CLI tool that simplifies managing local (for now) NuGet packages. It 
 
 ### Prerequisites
 
-- [.NET SDK 6.0 or later](https://dotnet.microsoft.com/download/dotnet/6.0)
+- [.NET SDK 9.0 or later](https://dotnet.microsoft.com/download/dotnet/9.0)
 
 ### Install via .NET Tool
 
