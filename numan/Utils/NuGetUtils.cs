@@ -96,6 +96,11 @@ public static class NuGetUtils
                         packages[packageName].Versions.Add(version);
                     }
                 }
+
+                foreach (var package in packages.Values)
+                {
+                    package.Versions.Sort((a, b) => b.CompareTo(a));
+                }
             }
         }
         else

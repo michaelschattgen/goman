@@ -13,6 +13,7 @@ public class UpdateCommand : BaseCommand
         PreExecute();
 
         var config = ConfigManager.Config;
+        NugetSource? source = null;
 
         if (config.NugetSources.Count == 0)
         {
@@ -20,11 +21,26 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        if (config.NugetSources.Count > 1)
+        if (string.IsNullOrWhiteSpace(sourceName))
         {
-            var defaultSource = ConfigManager.GetDefaultSource();
-            sourceName = defaultSource.Name ?? defaultSource.Value;
-            AnsiConsole.MarkupLine($"[yellow]Multiple local NuGet sources found, using default source ({sourceName}). You can override this by using the --source parameter.[/]");
+            if (config.NugetSources.Count > 1)
+            {
+                var defaultSource = ConfigManager.GetDefaultSource();
+                sourceName = defaultSource.Name ?? defaultSource.Value;
+                AnsiConsole.MarkupLine($"[yellow]Multiple local NuGet sources found, using default source ({sourceName}). You can override this by using the --source parameter.[/]");
+            }
+
+            source = config.NugetSources.FirstOrDefault();
+        }
+        else
+        {
+            source = config.NugetSources.FirstOrDefault(x => x.Name == sourceName || x.Value == sourceName);
+        }
+
+        if (source == null)
+        {
+            AnsiConsole.MarkupLine($"[red]No sources found.[/]");
+            return;
         }
 
         if (config.MonitoredFolders.Count == 0)
@@ -33,11 +49,7 @@ public class UpdateCommand : BaseCommand
             return;
         }
 
-        List<PackageInfo> installedPackages = new();
-        foreach (var source in config.NugetSources.Where(x => x.Name == sourceName))
-        {
-            installedPackages.AddRange(NuGetUtils.GetInstalledPackages(source.Value, includeAllVersions: false));
-        }
+        List<PackageInfo> installedPackages = NuGetUtils.GetInstalledPackages(source.Value, includeAllVersions: false);
 
         List<PackageInfo> monitoredPackages = new();
         foreach (var folder in config.MonitoredFolders)
